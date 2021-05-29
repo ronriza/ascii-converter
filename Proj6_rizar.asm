@@ -35,7 +35,7 @@ ENDM
 
 
 MAXSIZE = 15
-NUM_OF_INPUTS = 5
+NUM_OF_INPUTS = 2
 
 .data
 
@@ -113,6 +113,9 @@ mDisplayString OFFSET averageString
 CDQ
 mov EBX, NUM_OF_INPUTS
 IDIV EBX
+
+
+;_print:
 push OFFSET revString
 push OFFSET outputString
 push EAX
@@ -155,12 +158,25 @@ CLD
 LODSB
 
 cmp AL, 45
-je _negativeNext
+je _negativeCheckLength
 cmp AL, 43
-je _next
+je _positiveCheckLength
+jmp _positiveLoop
+
+_negativeCheckLength:
+cmp ECX, 1
+je _invalid
+jmp _negativeNext
+
+_positiveCheckLength:
+cmp ECX, 1
+je _invalid
+jmp _positiveNext
 
 
-_stringLoop:
+
+
+_positiveLoop:
 cmp Al, 48
 jl _invalid
 
@@ -173,10 +189,10 @@ jo _invalid
 add EBX, EAX
 jo _invalid
 
-_next:
+_positiveNext:
 
 LODSB
-LOOP _stringLoop
+LOOP _positiveLoop
 
 
 jmp _end
@@ -196,7 +212,6 @@ imul EBX, 10
 jo _invalid
 js _negative
 imul EBX, -1
-jo _invalid
 _negative:
 sub EBX, EAX
 jo _invalid
