@@ -52,17 +52,18 @@ ENDM
 
 
 
-MAXSIZE = 15
-NUM_OF_INPUTS = 2
+MAXSIZE = 16									; 11 digits + 1 sign + 1 null + 3 leading zeros
+NUM_OF_INPUTS = 10
 
 .data
 
 userPrompt		BYTE   "Please enter a signed number: ",0
 inputError		BYTE   "Error: You did not enter an signed number or your number was too big.",13,10,0
+zeroError		BYTE   "Error: You have entered more than 3 leading zeros.",13,10,0
 space			BYTE   " ",0
 introduction    BYTE   "PROGRAMMING ASSIGNMENT 6: Designing low-level I/O procedures",13,10,"Written by: Ron Riza",13,10,13,10
-				BYTE   "Please enter 10 signed decimal integers.",13,10,"Each number must be able to fit in a 32-bit register. After you have",13,10
-				BYTE   "entered your numbers, I will display the numbers back to you, along with their sum and average",13,10,13,10,0
+				BYTE   "Please enter 10 signed decimal integers.",13,10,"Each number fit in a 32-bit register. Up to 15 characters and 3 leading 0s are allowed. After you have",13,10
+				BYTE   "entered your numbers, I will display the numbers back to you, along with their sum and average.",13,10,13,10,0
 enteredString	BYTE   "You have entered the following numbers:",13,10,0
 sumString		BYTE   "The sum of these numbers is: ",0
 averageString	BYTE   "The rounded average is: ",0
@@ -88,7 +89,7 @@ main PROC
 	mov ECX, NUM_OF_INPUTS						; sets loop counter
 
 _inputLoop:
-
+	push OFFSET zeroError
 	push OFFSET inputError
 	push EDI
 	push OFFSET stringLen
@@ -169,15 +170,16 @@ main ENDP
 ;	[EBP+16]: address of input string buffer
 ;	[EBP+20]: address of memory loction for string length to be stored
 ;	[EBP+24]: address of memory location for number to be stored
-;	[EBP+26]: address of error message string
+;	[EBP+28]: address of error message string
+;	[EBP+32]: address of leading zero error message string
 ;Returns: number and string length stored in memory
 ;-----------------------------------
 ReadVal PROC
-	push EBP
-	mov  EBP, ESP
+	LOCAL zeroCount:BYTE							; used to keep track of leading zeros
 	pushad
 
 _askAgain:
+	mov zeroCount, 0
 	mGetString [EBP+8], [EBP+12], [EBP+16], [EBP+20]
 	mov ESI, [EBP+16]								; source is address of string
 	mov EDI, [EBP+24]								; destination is address of integer
@@ -233,6 +235,11 @@ _positiveLoop:
 	jo   _invalid									; if there is an overflow, entered number cannot fit in 32-bit register
 	add  EBX, EAX
 	jo   _invalid									; checks overflow again
+	cmp  EBX, 0										; checks for leading zeros
+	jne  _positiveNext
+	inc  zeroCount
+	cmp  zeroCount, 4
+	je   _tooManyZeros								; if there are more than 3 leading zeros, jump to error
 
 _positiveNext:
 	LODSB											; moves to next char
@@ -259,6 +266,11 @@ _negativeLoop:
 	jo   _invalid								; if there is an overflow, entered number cannot fit in 32-bit register
 	sub  EBX, EAX
 	jo   _invalid								; check overflow again
+	cmp  EBX, 0
+	jne  _negativeNext
+	inc  zeroCount
+	cmp  zeroCount, 4
+	je   _tooManyZeros
 
 _negativeNext:
 	LODSB										; moves to next char
@@ -269,12 +281,15 @@ _invalid:
 	mDisplayString [EBP+28]						; error message is printed
 	jmp _askAgain								; user is asked to enter another number
 
+_toomanyZeros:
+	mDisplayString [EBP+32]
+	jmp _askAgain
+
 _end:
 	mov [EDI], EBX								; moves the result into the memory address specified
 
 	popad
-	pop EBP
-	RET 24
+	RET 28
 ReadVal ENDP
 
 ;------------------------
