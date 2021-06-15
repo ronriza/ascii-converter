@@ -1,10 +1,7 @@
-TITLE Designing low level I/O procedures  (Proj6_rizar.asm)
+TITLE Ascii Converter
 
 ; Author: Ron Riza
 ; Last Modified: 5/31/21
-; OSU email address: rizarD@oregonstate.edu
-; Course number/section:   CS271 Section 400
-; Project Number:       6          Due Date: 6/7/21
 ; Description: This program contains procedures ReadVal, which converts an ascii string
 ; entered by a user into a numerical value, and WriteVal, which convers a numerical value
 ; into a string and displays it to a user. The main procedure prompts a user for 10 signed numbers,
